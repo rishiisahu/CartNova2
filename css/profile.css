@@ -1,0 +1,36 @@
+/* Profile page styles */
+#main_box {
+    max-width: 800px;
+    margin: 40px auto;
+    background: #ffffff;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07);
+    border: 1px solid #e2e8f0;
+}
+
+#outer_box {
+    width: 100%;
+}
+
+#prof_pic {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #eff6ff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+#inner_box {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#inner_box td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+#inner_box .data {
+    font-weight: 700;
+    color: #0f172a;
+}

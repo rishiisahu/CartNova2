@@ -1,0 +1,6 @@
+{
+  "name": "ShopSphere E-Commerce",
+  "description": "Full-featured Java JSP, Servlet, JDBC and MySQL E-Commerce Web Application featuring responsive browsing, seller and buyer portals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
