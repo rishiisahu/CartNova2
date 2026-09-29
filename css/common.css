@@ -1,94 +1,208 @@
-/* Common CSS for CartNova E-Commerce */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/* ==========================================================================
+   CartNova Design System — Global Styles (Phase 11 Production Polish)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --primary-light: #eff6ff;
-    --secondary: #0f172a;
-    --accent: #f59e0b;
-    --success: #10b981;
-    --danger: #ef4444;
-    --surface: #ffffff;
-    --background: #f8fafc;
-    --border: #e2e8f0;
-    --text-main: #1e293b;
-    --text-muted: #64748b;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --radius: 12px;
+    /* Brand Primary Palette */
+    --cn-primary: #1d4ed8;         /* Reliable, vivid royal blue */
+    --cn-primary-hover: #1e40af;
+    --cn-primary-light: #eff6ff;
+    --cn-primary-ring: rgba(29, 78, 216, 0.15);
+
+    /* Neutral & Background Tones */
+    --cn-slate-950: #020617;
+    --cn-slate-900: #0f172a;
+    --cn-slate-800: #1e293b;
+    --cn-slate-700: #334155;
+    --cn-slate-600: #475569;
+    --cn-slate-500: #64748b;
+    --cn-slate-400: #94a3b8;
+    --cn-slate-300: #cbd5e1;
+    --cn-slate-200: #e2e8f0;
+    --cn-slate-100: #f1f5f9;
+    --cn-slate-50:  #f8fafc;
+    --cn-white:     #ffffff;
+
+    /* Semantics & Statuses */
+    --cn-success: #059669;
+    --cn-success-bg: #ecfdf5;
+    --cn-success-border: #a7f3d0;
+    
+    --cn-warning: #d97706;
+    --cn-warning-bg: #fffbeb;
+    --cn-warning-border: #fde68a;
+
+    --cn-danger: #dc2626;
+    --cn-danger-bg: #fef2f2;
+    --cn-danger-border: #fecaca;
+
+    /* Elevation & Shadows */
+    --cn-shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+    --cn-shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+    --cn-shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+    --cn-shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.1), 0 4px 12px -3px rgba(15, 23, 42, 0.05);
+
+    /* Radii */
+    --cn-radius-sm: 6px;
+    --cn-radius-md: 10px;
+    --cn-radius-lg: 14px;
+    --cn-radius-xl: 20px;
+    --cn-radius-pill: 9999px;
 }
 
-body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: var(--text-main);
-    background-color: var(--background);
+/* Base Document Reset & Typography */
+html, body {
     margin: 0;
     padding: 0;
-    line-height: 1.5;
+    background-color: var(--cn-slate-50);
+    color: var(--cn-slate-800);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 a {
-    text-decoration: none;
     color: inherit;
-    transition: all 0.2s ease;
+    text-decoration: none;
+    transition: color 0.15s ease, opacity 0.15s ease;
 }
 
-.hedding {
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    color: white;
-    padding: 18px 24px;
-    margin: 0;
-    font-size: 1.35rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+a:hover {
+    color: var(--cn-primary);
 }
 
-.btn-custom {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 18px;
-    font-size: 0.925rem;
+/* Standardized Button System */
+.btn {
     font-weight: 600;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-primary-custom {
-    background-color: var(--primary);
-    color: white !important;
-}
-
-.btn-primary-custom:hover {
-    background-color: var(--primary-hover);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-}
-
-.btn-outline-custom {
-    background-color: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-main);
-}
-
-.btn-outline-custom:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background-color: var(--primary-light);
-}
-
-.badge-custom {
+    border-radius: var(--cn-radius-md);
+    padding: 0.55rem 1.15rem;
+    font-size: 0.875rem;
     display: inline-flex;
     align-items: center;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-size: 0.75rem;
+    justify-content: center;
+    gap: 0.45rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+    background-color: var(--cn-primary);
+    border-color: var(--cn-primary);
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(29, 78, 216, 0.2);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--cn-primary-hover);
+    border-color: var(--cn-primary-hover);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+    border-color: var(--cn-primary);
+    color: var(--cn-primary);
+    background-color: transparent;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--cn-primary-light);
+    color: var(--cn-primary-hover);
+    border-color: var(--cn-primary-hover);
+}
+
+.btn-secondary, .btn-outline-secondary {
+    border-color: var(--cn-slate-200);
+    color: var(--cn-slate-700);
+    background-color: #ffffff;
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--cn-slate-100);
+    color: var(--cn-slate-900);
+    border-color: var(--cn-slate-300);
+}
+
+/* Clean Card Component */
+.cn-card {
+    background: #ffffff;
+    border: 1px solid var(--cn-slate-200);
+    border-radius: var(--cn-radius-lg);
+    box-shadow: var(--cn-shadow-xs);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.cn-card:hover {
+    box-shadow: var(--cn-shadow-md);
+    border-color: var(--cn-slate-300);
+}
+
+/* Form Inputs */
+.form-control, .form-select {
+    border: 1px solid var(--cn-slate-300);
+    border-radius: var(--cn-radius-md);
+    padding: 0.65rem 0.95rem;
+    font-size: 0.9rem;
+    color: var(--cn-slate-900);
+    background-color: #ffffff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--cn-primary);
+    box-shadow: 0 0 0 3px var(--cn-primary-ring);
+    outline: none;
+}
+
+.form-label {
+    font-size: 0.85rem;
     font-weight: 700;
+    color: var(--cn-slate-700);
+    margin-bottom: 0.4rem;
+}
+
+/* Badges */
+.badge-cn-discount {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    font-size: 0.725rem;
+    font-weight: 800;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--cn-radius-sm);
+    letter-spacing: 0.02em;
+}
+
+.badge-cn-instock {
+    background-color: var(--cn-success-bg);
+    color: var(--cn-success);
+    border: 1px solid var(--cn-success-border);
+    font-size: 0.725rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--cn-radius-sm);
+}
+
+.badge-cn-lowstock {
+    background-color: var(--cn-warning-bg);
+    color: var(--cn-warning);
+    border: 1px solid var(--cn-warning-border);
+    font-size: 0.725rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--cn-radius-sm);
+}
+
+.badge-cn-outstock {
+    background-color: var(--cn-danger-bg);
+    color: var(--cn-danger);
+    border: 1px solid var(--cn-danger-border);
+    font-size: 0.725rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--cn-radius-sm);
 }

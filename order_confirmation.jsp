@@ -181,7 +181,10 @@
 
                         <!-- Action Buttons -->
                         <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 pt-3 border-top">
-                            <a href="products.do" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm">
+                            <a href="my_orders.do" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm">
+                                <i class="fa-solid fa-receipt me-1"></i> View My Orders
+                            </a>
+                            <a href="products.do" class="btn btn-outline-primary rounded-pill px-4 py-2.5 fw-semibold">
                                 <i class="fa-solid fa-bag-shopping me-1"></i> Continue Shopping
                             </a>
                             <a href="index.jsp" class="btn btn-outline-secondary rounded-pill px-4 py-2.5 fw-semibold">

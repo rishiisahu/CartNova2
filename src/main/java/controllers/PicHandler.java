@@ -31,15 +31,24 @@ public class PicHandler extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         String picPath = request.getParameter("pic_path");
-        if (picPath == null || picPath.trim().isEmpty()) {
+        if (picPath == null || picPath.trim().isEmpty() || picPath.contains("..") || picPath.startsWith("/") || picPath.startsWith("\\")) {
             response.sendRedirect("images/user.png");
             return;
         }
 
         String applicationPath = request.getServletContext().getRealPath("");
+        File baseDir = new File(applicationPath + File.separator + UPLOAD_DIR);
         File file = new File(applicationPath + File.separator + picPath);
-        if (!file.exists()) {
-            file = new File(picPath);
+
+        // Security: Ensure requested file canonical path stays strictly inside application uploads directory
+        try {
+            if (!file.exists() || !file.getCanonicalPath().startsWith(new File(applicationPath).getCanonicalPath())) {
+                response.sendRedirect("images/user.png");
+                return;
+            }
+        } catch (SecurityException se) {
+            response.sendRedirect("images/user.png");
+            return;
         }
 
         if (file.exists()) {

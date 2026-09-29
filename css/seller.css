@@ -1,0 +1,187 @@
+/* ==========================================================================
+   CartNova E-Commerce — Seller Central & Dashboard Styles (Phase 9)
+   ========================================================================== */
+
+.seller-page-wrapper {
+    background-color: #f8fafc;
+    min-height: calc(100vh - 180px);
+    padding-bottom: 4rem;
+}
+
+/* Seller Top Banner */
+.seller-hero-bar {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    border-radius: 1.25rem;
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.25);
+}
+
+.seller-hero-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.25rem;
+}
+
+.seller-hero-sub {
+    font-size: 0.88rem;
+    color: #94a3b8;
+}
+
+/* KPI Metric Cards */
+.kpi-card {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.kpi-value {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+
+.kpi-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.kpi-icon-blue {
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+.kpi-icon-emerald {
+    background-color: #ecfdf5;
+    color: #059669;
+}
+
+.kpi-icon-amber {
+    background-color: #fffbeb;
+    color: #d97706;
+}
+
+.kpi-icon-rose {
+    background-color: #fff1f2;
+    color: #e11d48;
+}
+
+/* Section Box */
+.seller-content-card {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    border: 1px solid #e2e8f0;
+    padding: 1.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+}
+
+.seller-section-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.seller-section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0;
+}
+
+/* Stock Status Badges */
+.badge-stock-in {
+    background-color: #d1fae5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 2rem;
+}
+
+.badge-stock-low {
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 2rem;
+}
+
+.badge-stock-out {
+    background-color: #ffe4e6;
+    color: #e11d48;
+    border: 1px solid #fecdd3;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 2rem;
+}
+
+/* Modern Table */
+.seller-table-wrap {
+    overflow-x: auto;
+    border-radius: 0.85rem;
+    border: 1px solid #e2e8f0;
+}
+
+.seller-table {
+    margin-bottom: 0;
+}
+
+.seller-table thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.seller-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    font-size: 0.88rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.seller-table tbody tr:last-child td {
+    border-bottom: none;
+}

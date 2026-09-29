@@ -71,7 +71,7 @@
         <!-- Bottom bar -->
         <div class="footer-bottom">
             <div>
-                &copy; <%= java.time.Year.now().getValue() %> <span class="text-white fw-bold">CartNova</span> E-Commerce Platform. All rights reserved. Built with JSP, Servlet, JDBC & MySQL.
+                &copy; <%= java.time.Year.now().getValue() %> <span class="text-white fw-bold">CartNova</span> Marketplace. All rights reserved.
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <span class="payment-badge"><i class="fa-brands fa-cc-visa me-1"></i> Visa</span>

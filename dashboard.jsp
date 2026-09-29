@@ -49,7 +49,7 @@
                         <div class="fs-1 text-primary mb-2"><i class="fa-solid fa-boxes-stacked"></i></div>
                         <h5 class="fw-bold">My Product Inventory</h5>
                         <p class="text-muted small">View, update prices, or manage your active product listings.</p>
-                        <a href="products.do" class="btn btn-primary rounded-pill mt-2">Manage Products</a>
+                        <a href="seller_products.do" class="btn btn-primary rounded-pill mt-2">Manage Products</a>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -62,10 +62,10 @@
                 </div>
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
-                        <div class="fs-1 text-info mb-2"><i class="fa-solid fa-id-badge"></i></div>
-                        <h5 class="fw-bold">Seller Profile</h5>
-                        <p class="text-muted small">Manage account details, email, contact phone, and seller avatar.</p>
-                        <a href="user_profile.do" class="btn btn-info text-white rounded-pill mt-2">View Profile</a>
+                        <div class="fs-1 text-info mb-2"><i class="fa-solid fa-gauge-high"></i></div>
+                        <h5 class="fw-bold">Seller Central</h5>
+                        <p class="text-muted small">View inventory health metrics, low stock warnings, and metrics.</p>
+                        <a href="seller_dashboard.do" class="btn btn-info text-white rounded-pill mt-2">Seller Dashboard</a>
                     </div>
                 </div>
             <% } else { %>

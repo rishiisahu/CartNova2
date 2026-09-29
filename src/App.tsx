@@ -6,7 +6,7 @@ import {
   Camera, Edit3, Trash2, ArrowUpDown, Filter, RotateCcw as ResetIcon,
   ChevronDown, Check, AlertTriangle, ArrowLeft, Bolt, Minus, Plus,
   Eye, EyeOff, Lock, Mail, Phone, ShieldAlert, KeyRound, UserCheck, 
-  LogIn, CheckCircle, HelpCircle, Shield
+  LogIn, CheckCircle, HelpCircle, Shield, ExternalLink, Upload, Cloud
 } from 'lucide-react';
 
 interface ProductItem {
@@ -175,8 +175,10 @@ const INITIAL_PRODUCTS: ProductItem[] = [
 ];
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'detail' | 'signin' | 'signup' | 'signup_success' | 'unauthorized' | 'cart' | 'checkout' | 'order_confirmation'>('products');
+  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'detail' | 'signin' | 'signup' | 'signup_success' | 'unauthorized' | 'cart' | 'checkout' | 'order_confirmation' | 'my_orders' | 'order_details' | 'seller_dashboard' | 'seller_products' | 'add_product' | 'edit_product'>('products');
+  const [products, setProducts] = useState<ProductItem[]>(INITIAL_PRODUCTS);
   const [selectedProduct, setSelectedProduct] = useState<ProductItem>(INITIAL_PRODUCTS[0]);
+  const [editingProduct, setEditingProduct] = useState<ProductItem>(INITIAL_PRODUCTS[0]);
   const [detailSelectedImage, setDetailSelectedImage] = useState<string>(INITIAL_PRODUCTS[0].image);
   const [detailQuantity, setDetailQuantity] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -192,6 +194,13 @@ export default function App() {
   const [uploadModalProduct, setUploadModalProduct] = useState<ProductItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Phase 9 Seller Add/Edit Form State
+  const [newProdName, setNewProdName] = useState('');
+  const [newProdDesc, setNewProdDesc] = useState('');
+  const [newProdPrice, setNewProdPrice] = useState('199');
+  const [newProdDiscount, setNewProdDiscount] = useState('10');
+  const [newProdQty, setNewProdQty] = useState('20');
+
   // Phase 7 Checkout & Order State
   const [checkoutFullName, setCheckoutFullName] = useState('Demo Buyer');
   const [checkoutPhone, setCheckoutPhone] = useState('9123456780');
@@ -202,6 +211,45 @@ export default function App() {
   const [checkoutPaymentMethod, setCheckoutPaymentMethod] = useState('COD');
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [placedOrder, setPlacedOrder] = useState<OrderData | null>(null);
+
+  // Phase 8 My Orders State
+  const [orderList, setOrderList] = useState<OrderData[]>([
+    {
+      orderId: 782415,
+      customerName: 'Demo Buyer',
+      phone: '9123456780',
+      address: '452 Market Street, Suite 300',
+      city: 'San Francisco',
+      state: 'California',
+      postalCode: '94105',
+      subtotal: 512,
+      shipping: 0,
+      tax: 41,
+      grandTotal: 553,
+      orderStatus: 'CONFIRMED',
+      paymentStatus: 'COD',
+      orderDate: 'September 28, 2026 at 02:45 PM',
+      items: [
+        {
+          productId: 1,
+          productName: 'Sony WH-1000XM5 Wireless Noise Cancelling Headphones',
+          price: 314,
+          quantity: 1,
+          subtotal: 314,
+          image: INITIAL_PRODUCTS[0].image
+        },
+        {
+          productId: 3,
+          productName: 'Logitech MX Master 3S Wireless Performance Mouse',
+          price: 84,
+          quantity: 2,
+          subtotal: 168,
+          image: INITIAL_PRODUCTS[2].image
+        }
+      ]
+    }
+  ]);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderData | null>(null);
 
   const cartCount = (activeSession === 'buyer' || activeSession === 'guest')
     ? cartItems.reduce((acc, item) => acc + item.quantity, 0)
@@ -245,7 +293,7 @@ export default function App() {
       return;
     }
     if (activeSession === 'guest') {
-      showToast("Please sign in as a Buyer to add items to cart (signin.jsp).");
+      showToast("Please sign in as a Buyer to add items to cart.");
       setCurrentPage('signin');
       return;
     }
@@ -258,12 +306,12 @@ export default function App() {
           newQty = product.stock;
           showToast(`Quantity capped to available stock (${product.stock}) for "${product.name.substring(0, 16)}..."`);
         } else {
-          showToast(`Updated "${product.name.substring(0, 18)}..." in your cart! (add_to_cart.do)`);
+          showToast(`Updated "${product.name.substring(0, 18)}..." in your cart!`);
         }
         return prev.map(item => item.product.id === product.id ? { ...item, quantity: newQty } : item);
       } else {
         const initialQty = Math.min(qty, product.stock);
-        showToast(`Added "${product.name.substring(0, 18)}..." to your cart! (add_to_cart.do)`);
+        showToast(`Added "${product.name.substring(0, 18)}..." to your cart!`);
         return [...prev, { id: Date.now(), product, quantity: initialQty }];
       }
     });
@@ -282,17 +330,17 @@ export default function App() {
       }
       return item;
     }));
-    showToast("Cart updated successfully (update_cart.do)!");
+    showToast("Cart updated successfully!");
   };
 
   const removeFromCart = (itemId: number) => {
     setCartItems(prev => prev.filter(item => item.id !== itemId));
-    showToast("Item removed from your cart (remove_from_cart.do).");
+    showToast("Item removed from your cart.");
   };
 
   const handleProceedToCheckout = () => {
     if (activeSession === 'guest') {
-      showToast("Please sign in as a Buyer to proceed to checkout (signin.jsp).");
+      showToast("Please sign in as a Buyer to proceed to checkout.");
       setCurrentPage('signin');
       return;
     }
@@ -393,13 +441,176 @@ export default function App() {
       item.product.stock = Math.max(0, item.product.stock - item.quantity);
     }
 
-    // Clear cart
+    // Clear cart & update orders list
     setCartItems([]);
     setPlacedOrder(newOrder);
+    setOrderList(prev => [newOrder, ...prev]);
     setCheckoutError(null);
     setCurrentPage('order_confirmation');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast(`Order #CN-${orderId} placed successfully! Transaction committed.`);
+  };
+
+  const handleOpenMyOrders = () => {
+    if (activeSession === 'guest') {
+      showToast("Please sign in to view your orders.");
+      setCurrentPage('signin');
+      return;
+    }
+    if (activeSession === 'seller') {
+      showToast("Seller accounts cannot access buyer order history.");
+      setCurrentPage('unauthorized');
+      return;
+    }
+    setUserDropdownOpen(false);
+    setCurrentPage('my_orders');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenOrderDetails = (order: OrderData) => {
+    if (activeSession === 'seller') {
+      showToast("Unauthorized: Sellers cannot view buyer orders.");
+      setCurrentPage('unauthorized');
+      return;
+    }
+    setSelectedOrderDetails(order);
+    setCurrentPage('order_details');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Phase 9 Seller Operations
+  const handleOpenSellerDashboard = () => {
+    if (activeSession === 'guest') {
+      showToast("Please sign in to access Seller Central.");
+      setCurrentPage('signin');
+      return;
+    }
+    if (activeSession === 'buyer') {
+      showToast("Access restricted: Seller accounts only.");
+      setCurrentPage('unauthorized');
+      return;
+    }
+    setUserDropdownOpen(false);
+    setCurrentPage('seller_dashboard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenSellerProducts = () => {
+    if (activeSession === 'guest') {
+      showToast("Please sign in to manage products.");
+      setCurrentPage('signin');
+      return;
+    }
+    if (activeSession === 'buyer') {
+      showToast("Access restricted: Seller accounts only.");
+      setCurrentPage('unauthorized');
+      return;
+    }
+    setUserDropdownOpen(false);
+    setCurrentPage('seller_products');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenAddProduct = () => {
+    if (activeSession !== 'seller') {
+      showToast("Only sellers can list products.");
+      setCurrentPage('unauthorized');
+      return;
+    }
+    setUserDropdownOpen(false);
+    setNewProdName('');
+    setNewProdDesc('');
+    setNewProdPrice('199');
+    setNewProdDiscount('10');
+    setNewProdQty('25');
+    setCurrentPage('add_product');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveNewProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProdName.trim() || !newProdDesc.trim()) {
+      showToast("Please fill in all required fields.");
+      return;
+    }
+    const priceNum = Math.max(1, parseInt(newProdPrice) || 100);
+    const discNum = Math.max(0, Math.min(100, parseFloat(newProdDiscount) || 0));
+    const qtyNum = Math.max(0, parseInt(newProdQty) || 10);
+
+    const newProd: ProductItem = {
+      id: Date.now(),
+      name: newProdName.trim(),
+      category: 'Electronics',
+      price: Math.round(priceNum * (1 - discNum / 100)),
+      originalPrice: priceNum,
+      discount: Math.round(discNum),
+      stock: qtyNum,
+      sellerId: 1,
+      seller: 'Demo Seller',
+      rating: 5.0,
+      reviews: 0,
+      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80',
+      gallery: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'],
+      description: newProdDesc.trim()
+    };
+
+    setProducts(prev => [newProd, ...prev]);
+    showToast(`Product "${newProd.name.substring(0, 18)}..." published successfully!`);
+    setCurrentPage('seller_products');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenEditProduct = (prod: ProductItem) => {
+    if (activeSession !== 'seller' || prod.sellerId !== 1) {
+      showToast("Ownership check failed: You can only edit your own products.");
+      setCurrentPage('unauthorized');
+      return;
+    }
+    setEditingProduct(prod);
+    setNewProdName(prod.name);
+    setNewProdDesc(prod.description);
+    setNewProdPrice(String(prod.originalPrice || prod.price));
+    setNewProdDiscount(String(prod.discount || 0));
+    setNewProdQty(String(prod.stock));
+    setCurrentPage('edit_product');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleUpdateProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    const priceNum = Math.max(1, parseInt(newProdPrice) || 100);
+    const discNum = Math.max(0, Math.min(100, parseFloat(newProdDiscount) || 0));
+    const qtyNum = Math.max(0, parseInt(newProdQty) || 0);
+
+    setProducts(prev => prev.map(p => {
+      if (p.id === editingProduct.id) {
+        return {
+          ...p,
+          name: newProdName.trim(),
+          description: newProdDesc.trim(),
+          originalPrice: priceNum,
+          price: Math.round(priceNum * (1 - discNum / 100)),
+          discount: Math.round(discNum),
+          stock: qtyNum
+        };
+      }
+      return p;
+    }));
+
+    showToast(`Product #${editingProduct.id} updated successfully!`);
+    setCurrentPage('seller_products');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteProduct = (prod: ProductItem) => {
+    if (activeSession !== 'seller' || prod.sellerId !== 1) {
+      showToast("Ownership check failed: You cannot delete this product.");
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete "${prod.name}"?`)) {
+      setProducts(prev => prev.filter(p => p.id !== prod.id));
+      showToast(`Product #${prod.id} removed from catalog.`);
+    }
   };
 
   // Password strength calculation
@@ -455,7 +666,7 @@ export default function App() {
     setSignInError(null);
     const isSeller = signInEmail.toLowerCase().includes('seller');
     setActiveSession(isSeller ? 'seller' : 'buyer');
-    showToast(`Signed in successfully as ${isSeller ? 'Demo Seller' : 'Demo Buyer'} (signin.do)!`);
+    showToast(`Signed in successfully as ${isSeller ? 'Demo Seller' : 'Demo Buyer'}!`);
     setCurrentPage('products');
   };
 
@@ -493,13 +704,13 @@ export default function App() {
     }
 
     setSignUpError(null);
-    showToast('Registration successful! Redirecting to confirmation page (signup.do)...');
+    showToast('Registration successful! Welcome to CartNova.');
     setCurrentPage('signup_success');
   };
 
   const categories = ['All', 'Audio', 'Wearables', 'Accessories', 'Monitors', 'E-Readers'];
 
-  const filteredProducts = INITIAL_PRODUCTS.filter(item => {
+  const filteredProducts = products.filter(item => {
     const matchesCategory = selectedCategory === 'All' || item.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           item.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -555,7 +766,7 @@ export default function App() {
                   className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-200 rounded-xl p-2 cursor-pointer"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Posted to servlet: <code className="text-blue-600">product_pic.do</code>
+                  Supported formats: JPG, PNG, WebP (Max 5MB each)
                 </p>
               </div>
             </div>
@@ -569,7 +780,7 @@ export default function App() {
               <button 
                 onClick={() => {
                   setUploadModalProduct(null);
-                  showToast(`Photos uploaded for "${uploadModalProduct.name.substring(0, 20)}..." (product_pic.do)!`);
+                  showToast(`Photos uploaded successfully for "${uploadModalProduct.name.substring(0, 20)}..."!`);
                 }}
                 className="px-4 py-2 rounded-full text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm">
                 Upload Photos
@@ -579,87 +790,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Top Demo Bar (Phase 5 Navigator) */}
-      <div className="bg-slate-950 text-slate-300 text-xs py-2 px-4 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
-          
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-blue-400 font-bold">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Phase 6 Active: Real Shopping Cart (cart.do & cart.jsp)</span>
-            </span>
-
-            {/* View Switcher */}
-            <div className="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-800 flex-wrap">
-              <button 
-                onClick={() => { setCurrentPage('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${currentPage === 'home' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}>
-                index.jsp
-              </button>
-              <button 
-                onClick={() => { setCurrentPage('products'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${currentPage === 'products' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}>
-                products.jsp
-              </button>
-              <button 
-                onClick={() => { setCurrentPage('detail'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${currentPage === 'detail' ? 'bg-emerald-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}>
-                product_detail.jsp
-              </button>
-              <button 
-                onClick={() => { setCurrentPage('cart'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${currentPage === 'cart' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}>
-                cart.jsp ({cartCount})
-              </button>
-              <button 
-                onClick={() => { setCurrentPage('signin'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${currentPage === 'signin' ? 'bg-amber-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}>
-                signin.jsp
-              </button>
-              <button 
-                onClick={() => { setCurrentPage('signup'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${currentPage === 'signup' ? 'bg-purple-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}>
-                signup.jsp
-              </button>
-              <button 
-                onClick={() => { setCurrentPage('signup_success'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${currentPage === 'signup_success' ? 'bg-teal-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}>
-                signup_success.jsp
-              </button>
-              <button 
-                onClick={() => { setCurrentPage('unauthorized'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${currentPage === 'unauthorized' ? 'bg-rose-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}>
-                unauthorized.jsp
-              </button>
-            </div>
-          </div>
-
-          {/* Session Switcher */}
-          <div className="flex items-center gap-3">
-            <span className="text-slate-400 hidden md:inline">Session User:</span>
-            <div className="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-800">
-              <button 
-                onClick={() => { setActiveSession('guest'); setUserDropdownOpen(false); setFilterMineOnly(false); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${activeSession === 'guest' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-                Guest
-              </button>
-              <button 
-                onClick={() => { setActiveSession('buyer'); setUserDropdownOpen(false); setFilterMineOnly(false); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${activeSession === 'buyer' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-                Buyer
-              </button>
-              <button 
-                onClick={() => { setActiveSession('seller'); setUserDropdownOpen(false); }}
-                className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${activeSession === 'seller' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-                Seller
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Main Sticky Header (navbar.jsp) */}
+      {/* Customer-facing header without development banners */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20 gap-4">
@@ -673,7 +804,7 @@ export default function App() {
                 <span className="text-2xl font-black tracking-tight text-slate-900 leading-none">
                   Cart<span className="text-blue-600">Nova</span>
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">JSP &bull; JDBC &bull; MySQL</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Marketplace</span>
               </div>
             </button>
 
@@ -702,7 +833,7 @@ export default function App() {
               <button 
                 onClick={() => { setCurrentPage('products'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 className={`hidden lg:inline-flex text-sm font-semibold px-3 py-1.5 rounded-lg transition ${currentPage === 'products' ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:text-blue-600'}`}>
-                All Products (products.do)
+                All Products
               </button>
 
               {activeSession === 'guest' ? (
@@ -751,28 +882,27 @@ export default function App() {
                         </span>
                       </div>
                       
-                      <button onClick={() => { setUserDropdownOpen(false); showToast("Opens dashboard.jsp"); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
-                        <LayoutDashboard className="w-4 h-4 text-blue-600" /> Dashboard.jsp
-                      </button>
-                      <button onClick={() => { setUserDropdownOpen(false); showToast("Opens user_profile.do"); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
-                        <UserIcon className="w-4 h-4 text-blue-600" /> My Profile (user_profile.do)
-                      </button>
-
                       {activeSession === 'seller' ? (
                         <>
-                          <button onClick={() => { setCurrentPage('products'); setFilterMineOnly(true); setUserDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
-                            <Tag className="w-4 h-4 text-amber-600" /> My Listed Products
+                          <button onClick={handleOpenSellerDashboard} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
+                            <LayoutDashboard className="w-4 h-4 text-blue-600" /> Seller Central
                           </button>
-                          <button onClick={() => { setUserDropdownOpen(false); showToast("Opens add_product.do"); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
-                            <PlusCircle className="w-4 h-4 text-amber-600" /> Add New Product.jsp
+                          <button onClick={handleOpenSellerProducts} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
+                            <Tag className="w-4 h-4 text-amber-600" /> Manage Products
+                          </button>
+                          <button onClick={handleOpenAddProduct} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
+                            <PlusCircle className="w-4 h-4 text-emerald-600" /> Add New Product
                           </button>
                         </>
                       ) : (
                         <>
+                          <button onClick={() => { setUserDropdownOpen(false); setCurrentPage('home'); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
+                            <LayoutDashboard className="w-4 h-4 text-blue-600" /> Home
+                          </button>
                           <button onClick={() => { setUserDropdownOpen(false); setCurrentPage('cart'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
                             <ShoppingBag className="w-4 h-4 text-blue-600" /> My Cart ({cartCount})
                           </button>
-                          <button onClick={() => { setUserDropdownOpen(false); showToast("Opens my_orders.do"); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
+                          <button onClick={handleOpenMyOrders} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 text-left">
                             <Receipt className="w-4 h-4 text-blue-600" /> My Orders
                           </button>
                         </>
@@ -784,10 +914,10 @@ export default function App() {
                           setActiveSession('guest');
                           setUserDropdownOpen(false);
                           setCurrentPage('signin');
-                          showToast("Signed out successfully (signout.do)!");
+                          showToast("Signed out successfully!");
                         }} 
                         className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 text-left">
-                        <LogOut className="w-4 h-4" /> Sign Out (signout.do)
+                        <LogOut className="w-4 h-4" /> Sign Out
                       </button>
                     </div>
                   )}
@@ -902,7 +1032,7 @@ export default function App() {
                   type="submit"
                   className="w-full py-3 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 transition">
                   <LogIn className="w-4 h-4" />
-                  <span>Sign In to Account (signin.do)</span>
+                  <span>Sign In to Account</span>
                 </button>
               </form>
 
@@ -1044,7 +1174,7 @@ export default function App() {
                   {emailCheckStatus === 'checking' && (
                     <div className="mt-1.5 text-[11px] text-sky-600 flex items-center gap-1.5 animate-pulse">
                       <div className="w-3 h-3 border-2 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
-                      <span>Checking email availability via check_email_exists.do...</span>
+                      <span>Checking email availability...</span>
                     </div>
                   )}
                   {emailCheckStatus === 'available' && (
@@ -1188,7 +1318,7 @@ export default function App() {
                   type="submit"
                   className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 transition">
                   <UserCheck className="w-4 h-4" />
-                  <span>Register Account (signup.do)</span>
+                  <span>Create Account</span>
                 </button>
               </form>
 
@@ -1205,7 +1335,7 @@ export default function App() {
           </div>
         ) : currentPage === 'signup_success' ? (
           /* ============================================================== */
-          /* VIEW 3: SIGNUP SUCCESS ONBOARDING (signup_success.jsp)          */
+          /* VIEW 3: SIGNUP SUCCESS ONBOARDING                              */
           /* ============================================================== */
           <div className="py-12 px-4 sm:px-6 flex items-center justify-center min-h-[calc(100vh-280px)]">
             <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 shadow-xl max-w-lg w-full text-center animate-in zoom-in-95">
@@ -1216,7 +1346,7 @@ export default function App() {
 
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Account Created!</h1>
               <p className="text-xs sm:text-sm text-slate-500 mt-2 max-w-sm mx-auto">
-                Welcome to <strong>CartNova E-Commerce</strong>. Your user account has been successfully recorded in the MySQL database.
+                Welcome to <strong>CartNova</strong>. Your account has been created successfully. You can now sign in and explore verified electronics.
               </p>
 
               <div className="grid grid-cols-3 gap-3 my-8 text-center">
@@ -1241,17 +1371,17 @@ export default function App() {
                 <button 
                   onClick={() => { setCurrentPage('signin'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="w-full py-3 px-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 transition">
-                  <LogIn className="w-4 h-4" /> Sign In to Your Account (signin.do)
+                  <LogIn className="w-4 h-4" /> Sign In to Your Account
                 </button>
                 <button 
                   onClick={() => { setCurrentPage('products'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="w-full py-3 px-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition">
-                  <Search className="w-4 h-4" /> Explore Products Catalog (products.do)
+                  <Search className="w-4 h-4" /> Explore Products
                 </button>
                 <button 
                   onClick={() => { setCurrentPage('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="text-xs text-slate-500 hover:text-slate-800 pt-2 font-medium">
-                  Return to Homepage (index.jsp)
+                  Return to Home
                 </button>
               </div>
 
@@ -1282,7 +1412,7 @@ export default function App() {
                 <button 
                   onClick={() => { setCurrentPage('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="w-full py-3 px-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition">
-                  Return to Homepage (index.jsp)
+                  Return to Home
                 </button>
               </div>
 
@@ -1290,20 +1420,20 @@ export default function App() {
           </div>
         ) : currentPage === 'cart' ? (
           /* ============================================================== */
-          /* VIEW 5: SHOPPING CART (cart.do & cart.jsp)                     */
+          /* VIEW 5: SHOPPING CART                                          */
           /* ============================================================== */
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">
             {/* Breadcrumb Bar */}
             <div className="flex items-center gap-2 text-xs text-slate-500 mb-6 flex-wrap">
               <button onClick={() => setCurrentPage('home')} className="hover:text-blue-600 flex items-center gap-1">
-                index.jsp (Home)
+                Home
               </button>
               <span className="text-slate-300">/</span>
               <button onClick={() => setCurrentPage('products')} className="hover:text-blue-600">
-                products.jsp (Catalog)
+                Catalog
               </button>
               <span className="text-slate-300">/</span>
-              <span className="text-slate-900 font-bold">cart.jsp (Shopping Cart)</span>
+              <span className="text-slate-900 font-bold">Shopping Cart</span>
             </div>
 
             {/* Header */}
@@ -1312,7 +1442,7 @@ export default function App() {
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Shopping Cart</h1>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
                   {cartItems.length > 0 
-                    ? `You have ${cartCount} item${cartCount === 1 ? '' : 's'} in your database-backed cart.` 
+                    ? `You have ${cartCount} item${cartCount === 1 ? '' : 's'} in your cart.` 
                     : 'Your cart is currently empty. Explore our verified marketplace catalog below.'}
                 </p>
               </div>
@@ -1352,7 +1482,7 @@ export default function App() {
                   <button 
                     onClick={() => setCurrentPage('products')}
                     className="px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition">
-                    Explore Products (products.do)
+                    Explore Products
                   </button>
                   <button 
                     onClick={() => setCurrentPage('home')}
@@ -1461,7 +1591,7 @@ export default function App() {
                             <button 
                               onClick={() => removeFromCart(item.id)}
                               className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                              title="Remove item (remove_from_cart.do)">
+                              title="Remove item">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -1533,7 +1663,7 @@ export default function App() {
                           <div className="text-center">
                             <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 inline-block">
                               <ShieldCheck className="w-3 h-3 inline mr-1 text-emerald-600" />
-                              Secure Checkout (checkout.do)
+                              256-Bit SSL Encrypted Checkout
                             </span>
                           </div>
                           <button 
@@ -1725,7 +1855,7 @@ export default function App() {
                       </div>
                       <div>
                         <h2 className="text-sm font-bold text-slate-900">Payment Option</h2>
-                        <p className="text-[11px] text-slate-500">Phase 7 supported payment method</p>
+                        <p className="text-[11px] text-slate-500">Safe & convenient payment upon arrival</p>
                       </div>
                     </div>
 
@@ -1756,7 +1886,7 @@ export default function App() {
                   <button 
                     type="submit"
                     className="w-full py-4 px-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition">
-                    <Lock className="w-4 h-4" /> Confirm & Place Order (place_order.do)
+                    <Lock className="w-4 h-4" /> Confirm & Place Order
                   </button>
                 </form>
               </div>
@@ -1956,8 +2086,13 @@ export default function App() {
               {/* Actions */}
               <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4 border-t border-slate-100">
                 <button 
-                  onClick={() => setCurrentPage('products')}
+                  onClick={handleOpenMyOrders}
                   className="py-3 px-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center gap-2">
+                  <Receipt className="w-3.5 h-3.5" /> View My Orders
+                </button>
+                <button 
+                  onClick={() => setCurrentPage('products')}
+                  className="py-3 px-6 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition flex items-center justify-center gap-2">
                   <ShoppingBag className="w-3.5 h-3.5" /> Continue Shopping
                 </button>
                 <button 
@@ -1966,6 +2101,759 @@ export default function App() {
                   Return to Home
                 </button>
               </div>
+            </div>
+          </div>
+        ) : currentPage === 'my_orders' ? (
+          /* ============================================================== */
+          /* VIEW: MY ORDERS (my_orders.jsp / my_orders.do)                 */
+          /* ============================================================== */
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-2 text-xs text-slate-500 mb-6 flex-wrap">
+              <button onClick={() => setCurrentPage('home')} className="hover:text-blue-600">Home</button>
+              <span>/</span>
+              <span className="font-semibold text-slate-900">My Orders</span>
+            </div>
+
+            {/* Header */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900">My Orders</h1>
+                <p className="text-xs text-slate-500">Track and review your order history and item details</p>
+              </div>
+              <button 
+                onClick={() => setCurrentPage('products')}
+                className="py-2 px-4 rounded-full border border-blue-600 text-blue-600 hover:bg-blue-50 text-xs font-bold transition flex items-center gap-1.5">
+                <ShoppingBag className="w-3.5 h-3.5" /> Continue Shopping
+              </button>
+            </div>
+
+            {orderList.length === 0 ? (
+              /* Empty State */
+              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-xs">
+                <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4">
+                  <Receipt className="w-8 h-8" />
+                </div>
+                <h2 className="text-base font-bold text-slate-900 mb-1">No orders yet</h2>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto mb-6">
+                  You haven't placed any orders yet. Discover our tech catalogue and get quality gear delivered to your doorstep!
+                </p>
+                <button 
+                  onClick={() => setCurrentPage('products')}
+                  className="py-3 px-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition">
+                  Start Shopping
+                </button>
+              </div>
+            ) : (
+              /* Orders List */
+              <div className="space-y-4">
+                {orderList.map((order) => {
+                  const totalItems = order.items.reduce((acc, it) => acc + it.quantity, 0);
+
+                  return (
+                    <div key={order.orderId} className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden transition hover:shadow-md">
+                      <div className="bg-slate-50 px-6 py-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 text-xs">
+                        <div className="flex flex-wrap items-center gap-6">
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-semibold">Order Placed</span>
+                            <strong className="text-slate-900">{order.orderDate}</strong>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-semibold">Total Amount</span>
+                            <strong className="text-blue-600 font-bold">${order.grandTotal}</strong>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-semibold">Items</span>
+                            <strong className="text-slate-900">{totalItems} {totalItems === 1 ? 'Item' : 'Items'}</strong>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-semibold">Ship To</span>
+                            <strong className="text-slate-900">{order.customerName}</strong>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-slate-400 block text-[10px] uppercase font-semibold">Order #</span>
+                          <strong className="font-mono text-slate-900">#CN-{order.orderId}</strong>
+                        </div>
+                      </div>
+
+                      <div className="p-6 flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                            {order.orderStatus}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            Payment: <strong className="text-slate-800">{order.paymentStatus === 'COD' ? 'Cash on Delivery' : order.paymentStatus}</strong>
+                          </span>
+                        </div>
+
+                        <button 
+                          onClick={() => handleOpenOrderDetails(order)}
+                          className="py-2 px-5 rounded-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-bold text-xs transition flex items-center gap-1.5 shadow-xs">
+                          View Order Details <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : currentPage === 'order_details' && selectedOrderDetails ? (
+          /* ============================================================== */
+          /* VIEW: ORDER DETAILS (order_details.jsp / order_details.do)     */
+          /* ============================================================== */
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-2 text-xs text-slate-500 mb-6 flex-wrap">
+              <button onClick={() => setCurrentPage('home')} className="hover:text-blue-600">Home</button>
+              <span>/</span>
+              <button onClick={() => setCurrentPage('my_orders')} className="hover:text-blue-600">My Orders</button>
+              <span>/</span>
+              <span className="font-semibold text-slate-900">Order #CN-{selectedOrderDetails.orderId}</span>
+            </div>
+
+            {/* Header */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900">Order Details</h1>
+                <p className="text-xs text-slate-500">
+                  Order <span className="font-mono font-bold text-slate-900">#CN-{selectedOrderDetails.orderId}</span> placed on {selectedOrderDetails.orderDate}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setCurrentPage('my_orders')}
+                  className="py-2 px-4 rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold transition flex items-center gap-1.5">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Orders
+                </button>
+                <button 
+                  onClick={() => setCurrentPage('products')}
+                  className="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5">
+                  <ShoppingBag className="w-3.5 h-3.5" /> Shop Again
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-8">
+              {/* Order Progression Stepper */}
+              <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-6">
+                <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider text-center mb-6">
+                  Order Status Progression
+                </h2>
+
+                <div className="max-w-2xl mx-auto flex items-center justify-between relative text-xs">
+                  {/* Progress track */}
+                  <div className="absolute top-4 left-8 right-8 h-1 bg-slate-200 z-0">
+                    <div className="h-full bg-blue-600 w-1/3"></div>
+                  </div>
+
+                  {/* Step 1: Placed */}
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
+                      <Check className="w-4 h-4" />
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-700 mt-2">Placed</span>
+                  </div>
+
+                  {/* Step 2: Confirmed */}
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold ring-4 ring-blue-100 shadow-xs">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <span className="text-[11px] font-bold text-blue-700 mt-2">Confirmed</span>
+                  </div>
+
+                  {/* Step 3: Shipped */}
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold">
+                      <Truck className="w-4 h-4" />
+                    </div>
+                    <span className="text-[11px] font-semibold text-slate-400 mt-2">Shipped</span>
+                  </div>
+
+                  {/* Step 4: Delivered */}
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold">
+                      <ShoppingBag className="w-4 h-4" />
+                    </div>
+                    <span className="text-[11px] font-semibold text-slate-400 mt-2">Delivered</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Delivery and Account Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/70">
+                  <span className="text-slate-400 font-semibold uppercase text-[10px] tracking-wider block mb-2">
+                    <Truck className="w-3.5 h-3.5 inline mr-1 text-blue-600" /> Shipping Destination
+                  </span>
+                  <p className="font-bold text-slate-900">{selectedOrderDetails.customerName}</p>
+                  <p className="text-slate-600 mt-0.5">{selectedOrderDetails.address}</p>
+                  <p className="text-slate-600">{selectedOrderDetails.city}, {selectedOrderDetails.state} - {selectedOrderDetails.postalCode}</p>
+                  <p className="text-slate-500 mt-2">Phone: {selectedOrderDetails.phone}</p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/70">
+                  <span className="text-slate-400 font-semibold uppercase text-[10px] tracking-wider block mb-2">
+                    <Receipt className="w-3.5 h-3.5 inline mr-1 text-blue-600" /> Payment & Summary
+                  </span>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Payment Option:</span>
+                      <strong className="text-slate-900">{selectedOrderDetails.paymentStatus === 'COD' ? 'Cash on Delivery' : selectedOrderDetails.paymentStatus}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Order Status:</span>
+                      <span className="font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full text-[10px]">
+                        {selectedOrderDetails.orderStatus}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-slate-200">
+                      <span className="text-slate-500 font-semibold">Total Amount:</span>
+                      <strong className="text-blue-600 text-sm">${selectedOrderDetails.grandTotal}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Items List Snapshot */}
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 mb-3">Purchased Items</h2>
+                <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                      <tr>
+                        <th className="py-3 px-4">Product Name</th>
+                        <th className="py-3 px-4 text-center">Historical Purchase Price</th>
+                        <th className="py-3 px-4 text-center">Quantity</th>
+                        <th className="py-3 px-4 text-right">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {selectedOrderDetails.items.map((it, idx) => (
+                        <tr key={idx}>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <img src={it.image} alt={it.productName} className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0" />
+                              <div>
+                                <span className="font-semibold text-slate-900 block truncate max-w-xs">{it.productName}</span>
+                                <span className="text-[10px] text-slate-400">Item ID #{it.productId}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 text-center text-slate-700">${it.price}</td>
+                          <td className="py-3.5 px-4 text-center font-bold text-slate-900">{it.quantity}</td>
+                          <td className="py-3.5 px-4 text-right font-bold text-slate-900">${it.subtotal}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Totals Breakdown */}
+              <div className="flex justify-end">
+                <div className="w-full sm:w-64 space-y-2 text-xs text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <strong className="text-slate-900">${selectedOrderDetails.subtotal}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Shipping:</span>
+                    <strong className="text-slate-900">{selectedOrderDetails.shipping === 0 ? 'FREE' : `$${selectedOrderDetails.shipping}`}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tax (8%):</span>
+                    <strong className="text-slate-900">${selectedOrderDetails.tax}</strong>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-slate-200 text-sm font-black text-slate-900">
+                    <span>Grand Total:</span>
+                    <span className="text-blue-600">${selectedOrderDetails.grandTotal}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : currentPage === 'seller_dashboard' ? (
+          /* ============================================================== */
+          /* VIEW: SELLER DASHBOARD (seller_dashboard.jsp / .do)            */
+          /* ============================================================== */
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">
+            {/* Seller Hero Welcome Banner */}
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-3xl p-6 sm:p-8 mb-8 shadow-lg flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-xl">
+                  DS
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-xl font-bold">Demo Seller</h1>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full">
+                      Verified Seller
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">seller@cartnova.com &bull; +1 (555) 019-2834</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleOpenSellerProducts}
+                  className="py-2.5 px-4 rounded-full border border-slate-600 hover:bg-slate-800 text-white font-semibold text-xs transition flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5" /> Manage Products
+                </button>
+                <button 
+                  onClick={handleOpenAddProduct}
+                  className="py-2.5 px-5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+                  <PlusCircle className="w-3.5 h-3.5" /> Add New Product
+                </button>
+              </div>
+            </div>
+
+            {/* KPI Cards Grid */}
+            {(() => {
+              const myProds = products.filter(p => p.sellerId === 1);
+              const totalStock = myProds.reduce((acc, p) => acc + p.stock, 0);
+              const lowStock = myProds.filter(p => p.stock > 0 && p.stock <= 5).length;
+              const outStock = myProds.filter(p => p.stock <= 0).length;
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Total Products</p>
+                      <p className="text-2xl font-black text-slate-900">{myProds.length}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <LayoutDashboard className="w-6 h-6" />
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Total Stock Units</p>
+                      <p className="text-2xl font-black text-slate-900">{totalStock}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <Tag className="w-6 h-6" />
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Low Stock (≤ 5)</p>
+                      <p className="text-2xl font-black text-amber-600">{lowStock}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                      <AlertTriangle className="w-6 h-6" />
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Out of Stock</p>
+                      <p className="text-2xl font-black text-rose-600">{outStock}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Recent Products Table */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">Recently Listed Inventory</h2>
+                  <p className="text-xs text-slate-500">Live products under your seller catalog</p>
+                </div>
+                <button 
+                  onClick={handleOpenSellerProducts}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                  View Full Inventory <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                    <tr>
+                      <th className="py-3 px-4">Product</th>
+                      <th className="py-3 px-4 text-center">Price</th>
+                      <th className="py-3 px-4 text-center">Discount</th>
+                      <th className="py-3 px-4 text-center">Stock</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {products.filter(p => p.sellerId === 1).slice(0, 5).map(p => (
+                      <tr key={p.id}>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" />
+                            <div>
+                              <p className="font-semibold text-slate-900 truncate max-w-xs">{p.name}</p>
+                              <p className="text-[10px] text-slate-400">SKU #PR-{String(p.id).padStart(4, '0')}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center font-bold text-slate-900">${p.price}</td>
+                        <td className="py-3 px-4 text-center">
+                          {p.discount ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
+                              {p.discount}% OFF
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">0%</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center font-bold text-slate-900">{p.stock}</td>
+                        <td className="py-3 px-4 text-center">
+                          {p.stock <= 0 ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700">Out of Stock</span>
+                          ) : p.stock <= 5 ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">Low Stock</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">Active</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex justify-end gap-1.5">
+                            <button 
+                              onClick={() => handleOpenDetail(p)}
+                              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600" title="View Listing">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => handleOpenEditProduct(p)}
+                              className="p-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 text-blue-600" title="Edit Product">
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : currentPage === 'seller_products' ? (
+          /* ============================================================== */
+          /* VIEW: MANAGE PRODUCTS (seller_products.jsp / .do)              */
+          /* ============================================================== */
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-2 text-xs text-slate-500 mb-6 flex-wrap">
+              <button onClick={handleOpenSellerDashboard} className="hover:text-blue-600">Seller Central</button>
+              <span>/</span>
+              <span className="font-semibold text-slate-900">Manage Products</span>
+            </div>
+
+            {/* Header */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900">My Product Catalog</h1>
+                <p className="text-xs text-slate-500">Edit prices, manage quantities, and upload gallery photos</p>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleOpenSellerDashboard}
+                  className="py-2.5 px-4 rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition flex items-center gap-1.5">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
+                </button>
+                <button 
+                  onClick={handleOpenAddProduct}
+                  className="py-2.5 px-5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+                  <PlusCircle className="w-3.5 h-3.5" /> Add New Product
+                </button>
+              </div>
+            </div>
+
+            {/* Product Table Card */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+              <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                    <tr>
+                      <th className="py-3 px-4">Item Details</th>
+                      <th className="py-3 px-4 text-center">Original Price</th>
+                      <th className="py-3 px-4 text-center">Discount</th>
+                      <th className="py-3 px-4 text-center">Current Price</th>
+                      <th className="py-3 px-4 text-center">Stock</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {products.filter(p => p.sellerId === 1).map(p => (
+                      <tr key={p.id}>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-3">
+                            <img src={p.image} alt={p.name} className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0" />
+                            <div>
+                              <p className="font-bold text-slate-900">{p.name}</p>
+                              <p className="text-[10px] text-slate-400">SKU #PR-{String(p.id).padStart(4, '0')}</p>
+                              <p className="text-[11px] text-slate-500 truncate max-w-sm mt-0.5">{p.description}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 text-center text-slate-500">${p.originalPrice || p.price}</td>
+                        <td className="py-3.5 px-4 text-center">
+                          {p.discount ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
+                              {p.discount}% OFF
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">0%</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-center font-bold text-blue-600">${p.price}</td>
+                        <td className="py-3.5 px-4 text-center font-bold text-slate-900">{p.stock}</td>
+                        <td className="py-3.5 px-4 text-center">
+                          {p.stock <= 0 ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Out of Stock</span>
+                          ) : p.stock <= 5 ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Low Stock ({p.stock})</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">In Stock</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex justify-end gap-1.5">
+                            <button 
+                              onClick={() => handleOpenDetail(p)}
+                              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600" title="View Listing">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => handleOpenEditProduct(p)}
+                              className="p-2 rounded-lg border border-blue-200 hover:bg-blue-50 text-blue-600" title="Edit Product">
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => setUploadModalProduct(p)}
+                              className="p-2 rounded-lg border border-cyan-200 hover:bg-cyan-50 text-cyan-700" title="Add Photo">
+                              <Upload className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteProduct(p)}
+                              className="p-2 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-600" title="Delete Product">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : currentPage === 'add_product' ? (
+          /* ============================================================== */
+          /* VIEW: ADD PRODUCT (add_product.jsp / add_product.do)           */
+          /* ============================================================== */
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-2 text-xs text-slate-500 mb-6 flex-wrap">
+              <button onClick={handleOpenSellerDashboard} className="hover:text-blue-600">Seller Central</button>
+              <span>/</span>
+              <button onClick={handleOpenSellerProducts} className="hover:text-blue-600">Manage Products</button>
+              <span>/</span>
+              <span className="font-semibold text-slate-900">Add Product</span>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-xs">
+              <div className="flex items-center gap-3 pb-4 mb-6 border-b border-slate-100">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <PlusCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">Create New Product Listing</h1>
+                  <p className="text-xs text-slate-500">Provide product specifications to publish to the marketplace</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveNewProduct} className="space-y-5 text-xs">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Product Title <span className="text-rose-500">*</span></label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="e.g. Sony WH-1000XM5 Wireless Headphones"
+                    value={newProdName} 
+                    onChange={e => setNewProdName(e.target.value)} 
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Product Description <span className="text-rose-500">*</span></label>
+                  <textarea 
+                    required 
+                    rows={4} 
+                    placeholder="Detailed specifications, features, warranty, and package contents..."
+                    value={newProdDesc} 
+                    onChange={e => setNewProdDesc(e.target.value)} 
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Base Price ($) <span className="text-rose-500">*</span></label>
+                    <input 
+                      type="number" 
+                      required 
+                      min="1" 
+                      value={newProdPrice} 
+                      onChange={e => setNewProdPrice(e.target.value)} 
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Discount (%)</label>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="100" 
+                      value={newProdDiscount} 
+                      onChange={e => setNewProdDiscount(e.target.value)} 
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Available Stock (Qty) <span className="text-rose-500">*</span></label>
+                    <input 
+                      type="number" 
+                      required 
+                      min="1" 
+                      value={newProdQty} 
+                      onChange={e => setNewProdQty(e.target.value)} 
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                  <button 
+                    type="button" 
+                    onClick={handleOpenSellerProducts} 
+                    className="py-2.5 px-5 rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold">
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="py-2.5 px-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md flex items-center gap-1.5">
+                    <Cloud className="w-3.5 h-3.5" /> Save & Publish Product
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : currentPage === 'edit_product' ? (
+          /* ============================================================== */
+          /* VIEW: EDIT PRODUCT (edit_product.jsp / edit_product.do)        */
+          /* ============================================================== */
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-2 text-xs text-slate-500 mb-6 flex-wrap">
+              <button onClick={handleOpenSellerDashboard} className="hover:text-blue-600">Seller Central</button>
+              <span>/</span>
+              <button onClick={handleOpenSellerProducts} className="hover:text-blue-600">Manage Products</button>
+              <span>/</span>
+              <span className="font-semibold text-slate-900">Edit #PR-{String(editingProduct.id).padStart(4, '0')}</span>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-xs">
+              <div className="flex items-center gap-3 pb-4 mb-6 border-b border-slate-100">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Edit3 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">Edit Product Specifications</h1>
+                  <p className="text-xs text-slate-500">Update listing details, pricing, discount, or available inventory</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleUpdateProduct} className="space-y-5 text-xs">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Product Title <span className="text-rose-500">*</span></label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={newProdName} 
+                    onChange={e => setNewProdName(e.target.value)} 
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Product Description <span className="text-rose-500">*</span></label>
+                  <textarea 
+                    required 
+                    rows={4} 
+                    value={newProdDesc} 
+                    onChange={e => setNewProdDesc(e.target.value)} 
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Base Price ($) <span className="text-rose-500">*</span></label>
+                    <input 
+                      type="number" 
+                      required 
+                      min="1" 
+                      value={newProdPrice} 
+                      onChange={e => setNewProdPrice(e.target.value)} 
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Discount (%)</label>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="100" 
+                      value={newProdDiscount} 
+                      onChange={e => setNewProdDiscount(e.target.value)} 
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Inventory Stock <span className="text-rose-500">*</span></label>
+                    <input 
+                      type="number" 
+                      required 
+                      min="0" 
+                      value={newProdQty} 
+                      onChange={e => setNewProdQty(e.target.value)} 
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition" 
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                  <button 
+                    type="button" 
+                    onClick={handleOpenSellerProducts} 
+                    className="py-2.5 px-5 rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold">
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="py-2.5 px-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5" /> Save Changes
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         ) : currentPage === 'detail' ? (
@@ -2173,7 +3061,7 @@ export default function App() {
                   <button 
                     onClick={() => setCurrentPage('products')}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
-                    <ArrowLeft className="w-3.5 h-3.5" /> Back to Products (products.do)
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back to Products
                   </button>
                   <span className="text-[11px] text-slate-400">Product ID: #{selectedProduct.id}</span>
                 </div>
@@ -2184,7 +3072,7 @@ export default function App() {
           </div>
         ) : currentPage === 'products' ? (
           /* ============================================================== */
-          /* VIEW 6: PRODUCTS CATALOG (products.jsp)                        */
+          /* VIEW 6: PRODUCTS CATALOG                                       */
           /* ============================================================== */
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             
@@ -2210,9 +3098,9 @@ export default function App() {
                       {filterMineOnly ? 'Showing My Listings (Demo Seller)' : 'Filter: My Listings Only'}
                     </button>
                     <button 
-                      onClick={() => showToast("Opens add_product.do")}
+                      onClick={handleOpenAddProduct}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition">
-                      <PlusCircle className="w-3.5 h-3.5" /> Add Listing (add_product.do)
+                      <PlusCircle className="w-3.5 h-3.5" /> Add Listing
                     </button>
                   </>
                 )}

@@ -28,15 +28,23 @@ public class ProductPicHandler extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         String productPath = request.getParameter("product_path");
-        if (productPath == null || productPath.trim().isEmpty()) {
+        if (productPath == null || productPath.trim().isEmpty() || productPath.contains("..") || productPath.startsWith("/") || productPath.startsWith("\\")) {
             response.sendRedirect("images/products.png");
             return;
         }
 
         String applicationPath = request.getServletContext().getRealPath("");
         File file = new File(applicationPath + File.separator + productPath);
-        if (!file.exists()) {
-            file = new File(productPath);
+
+        // Security: Ensure requested file canonical path stays strictly inside application uploads directory
+        try {
+            if (!file.exists() || !file.getCanonicalPath().startsWith(new File(applicationPath).getCanonicalPath())) {
+                response.sendRedirect("images/products.png");
+                return;
+            }
+        } catch (SecurityException se) {
+            response.sendRedirect("images/products.png");
+            return;
         }
 
         if (file.exists()) {

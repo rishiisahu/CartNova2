@@ -95,16 +95,16 @@
                                     <div class="fw-bold text-dark"><%= currentUser.getName() %></div>
                                     <small class="text-muted"><%= currentUser.getEmail() %></small>
                                 </li>
-                                <li><a class="dropdown-item py-2" href="dashboard.jsp"><i class="fa-solid fa-gauge-high me-2 text-primary"></i> Dashboard</a></li>
-                                <li><a class="dropdown-item py-2" href="user_profile.do"><i class="fa-regular fa-id-badge me-2 text-primary"></i> My Profile</a></li>
-                                
                                 <% if ("S".equals(currentRole)) { %>
-                                    <li><a class="dropdown-item py-2" href="products.do"><i class="fa-solid fa-boxes-stacked me-2 text-primary"></i> My Products</a></li>
+                                    <li><a class="dropdown-item py-2" href="seller_dashboard.do"><i class="fa-solid fa-gauge-high me-2 text-primary"></i> Seller Central</a></li>
+                                    <li><a class="dropdown-item py-2" href="seller_products.do"><i class="fa-solid fa-boxes-stacked me-2 text-primary"></i> Manage Products</a></li>
                                     <li><a class="dropdown-item py-2" href="add_product.do"><i class="fa-solid fa-circle-plus me-2 text-primary"></i> Add New Product</a></li>
                                 <% } else { %>
+                                    <li><a class="dropdown-item py-2" href="dashboard.jsp"><i class="fa-solid fa-gauge-high me-2 text-primary"></i> Dashboard</a></li>
                                     <li><a class="dropdown-item py-2" href="cart.do"><i class="fa-solid fa-bag-shopping me-2 text-primary"></i> My Cart</a></li>
                                     <li><a class="dropdown-item py-2" href="my_orders.do"><i class="fa-solid fa-receipt me-2 text-primary"></i> My Orders</a></li>
                                 <% } %>
+                                <li><a class="dropdown-item py-2" href="user_profile.do"><i class="fa-regular fa-id-badge me-2 text-primary"></i> My Profile</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item py-2 text-danger fw-semibold" href="signout.do">

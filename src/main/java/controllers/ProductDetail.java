@@ -16,7 +16,7 @@ import models.ProductPic;
 import models.User;
 import utils.DBConnection;
 
-@WebServlet("/product_details.do")
+@WebServlet(urlPatterns = {"/product_details.do", "/product_detail.do"})
 public class ProductDetail extends HttpServlet {
     private static final long serialVersionUID = 1L;
 

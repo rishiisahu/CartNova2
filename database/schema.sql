@@ -87,8 +87,8 @@ CREATE TABLE IF NOT EXISTS order_items (
 -- Sample Seed Data (For Testing)
 INSERT INTO users (user_id, name, email, password, phone, user_type) 
 VALUES 
-(1, 'Demo Seller', 'seller@shopsphere.com', 'seller123', '9876543210', 'S'),
-(2, 'Demo Buyer', 'buyer@shopsphere.com', 'buyer123', '9123456780', 'B')
+(1, 'Demo Seller', 'seller@cartnova.com', 'seller123', '9876543210', 'S'),
+(2, 'Demo Buyer', 'buyer@cartnova.com', 'buyer123', '9123456780', 'B')
 ON DUPLICATE KEY UPDATE name=name;
 
 INSERT INTO products (product_id, name, description, quantity, price, discount, user_id)

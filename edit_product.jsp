@@ -1,26 +1,32 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="models.Product" %>
 <%@ page import="models.User" %>
 
-<% 
-    User user = (User) session.getAttribute("user"); 
-    if (user == null) {
+<%
+    User seller = (User) session.getAttribute("user");
+    if (seller == null) {
         response.sendRedirect("signin.jsp");
         return;
     }
-    if (!"S".equalsIgnoreCase(user.getUserType())) {
+    if (!"S".equalsIgnoreCase(seller.getUserType())) {
         response.sendRedirect("unauthorized_access.jsp");
+        return;
+    }
+
+    Product product = (Product) request.getAttribute("product");
+    if (product == null) {
+        response.sendRedirect("seller_products.do");
         return;
     }
 
     String errorMessage = (String) request.getAttribute("error_message");
 %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Product - CartNova Seller Central</title>
+    <title>Edit Product #<%= product.getProductId() %> - CartNova Seller Central</title>
 
     <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
@@ -47,19 +53,19 @@
                 <span>/</span>
                 <a href="seller_products.do" class="text-decoration-none text-muted">Manage Products</a>
                 <span>/</span>
-                <span class="text-dark fw-bold">Add Product</span>
+                <span class="text-dark fw-bold">Edit #PR-<%= String.format("%04d", product.getProductId()) %></span>
             </div>
-            
+
             <div class="row justify-content-center">
                 <div class="col-lg-8 col-md-10">
                     <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
                         <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-3">
-                            <div class="kpi-icon-box kpi-icon-emerald" style="width: 48px; height: 48px;">
-                                <i class="fa-solid fa-circle-plus fs-5"></i>
+                            <div class="kpi-icon-box kpi-icon-blue" style="width: 48px; height: 48px;">
+                                <i class="fa-solid fa-pen-to-square fs-5"></i>
                             </div>
                             <div>
-                                <h1 class="h4 fw-bold text-dark mb-1">Create New Product Listing</h1>
-                                <p class="text-muted small mb-0">Fill in the product specifications to publish to the marketplace</p>
+                                <h1 class="h4 fw-bold text-dark mb-1">Edit Product Specifications</h1>
+                                <p class="text-muted small mb-0">Update listing details, pricing, discounts, and available stock</p>
                             </div>
                         </div>
 
@@ -69,31 +75,38 @@
                             </div>
                         <% } %>
 
-                        <form action="add_product.do" method="post" class="mt-2">
+                        <form action="edit_product.do" method="post">
+                            <input type="hidden" name="product_id" value="<%= product.getProductId() %>">
+
                             <div class="mb-3">
-                                <label for="product_name" class="form-label fw-bold text-dark small">Product Title <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control rounded-3" name="name" id="product_name" required placeholder="e.g. Sony WH-1000XM5 Wireless Headphones">
+                                <label for="name" class="form-label fw-bold text-dark small">Product Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-3" name="name" id="name" 
+                                       required value="<%= product.getName() %>" placeholder="Enter product title">
                             </div>
 
                             <div class="mb-3">
-                                <label for="description" class="form-label fw-bold text-dark small">Product Description <span class="text-danger">*</span></label>
-                                <textarea class="form-control rounded-3" name="description" id="description" rows="5" required placeholder="Detailed specifications, features, warranty, and package contents..."></textarea>
+                                <label for="description" class="form-label fw-bold text-dark small">Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control rounded-3" name="description" id="description" 
+                                          rows="5" required placeholder="Detailed specifications, features, warranty..."><%= product.getDescription() %></textarea>
                             </div>
 
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label for="price" class="form-label fw-bold text-dark small">Base Price ($) <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control rounded-3" name="price" id="price" min="1" required placeholder="e.g. 349">
+                                    <input type="number" class="form-control rounded-3" name="price" id="price" 
+                                           min="1" required value="<%= product.getPrice() %>">
                                 </div>
 
                                 <div class="col-md-4">
                                     <label for="discount" class="form-label fw-bold text-dark small">Discount (%)</label>
-                                    <input type="number" step="0.1" class="form-control rounded-3" name="discount" id="discount" min="0" max="100" value="0" placeholder="e.g. 10">
+                                    <input type="number" step="0.1" class="form-control rounded-3" name="discount" id="discount" 
+                                           min="0" max="100" value="<%= product.getDiscount() %>">
                                 </div>
 
                                 <div class="col-md-4">
-                                    <label for="quantity" class="form-label fw-bold text-dark small">Available Stock (Qty) <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control rounded-3" name="quantity" id="quantity" min="1" required placeholder="e.g. 25">
+                                    <label for="quantity" class="form-label fw-bold text-dark small">Inventory Stock <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control rounded-3" name="quantity" id="quantity" 
+                                           min="0" required value="<%= product.getQuantity() %>">
                                 </div>
                             </div>
 
@@ -102,10 +115,10 @@
                                     Cancel
                                 </a>
                                 <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
-                                    <i class="fa-solid fa-cloud-arrow-up me-2"></i> Save & Publish Product
+                                    <i class="fa-solid fa-floppy-disk me-1"></i> Update & Save Changes
                                 </button>
                             </div>
-                        </form> 
+                        </form>
                     </div>
                 </div>
             </div>
